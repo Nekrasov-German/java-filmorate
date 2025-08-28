@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 
 import lombok.Data;
 import ru.yandex.practicum.filmorate.util.DurationDeserializer;
+import ru.yandex.practicum.filmorate.util.PositiveDuration;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -27,6 +28,7 @@ public class Film {
     @Size(max = 200, message = "Максимальная длина описания — 200 символов")
     private String description;
     private LocalDate releaseDate;
+    @PositiveDuration(message = "продолжительность фильма должна быть положительным числом.")
     @JsonSerialize(as = Long.class)
     @JsonDeserialize(using = DurationDeserializer.class)
     private Duration duration;

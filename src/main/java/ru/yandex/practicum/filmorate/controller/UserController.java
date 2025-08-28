@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
@@ -16,7 +15,6 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/users")
-@Validated
 public class UserController {
     private final Map<Long, User> users = new HashMap<>();
 
