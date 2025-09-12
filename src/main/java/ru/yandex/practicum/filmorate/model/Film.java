@@ -14,6 +14,8 @@ import ru.yandex.practicum.filmorate.util.PositiveDuration;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Film.
@@ -32,6 +34,7 @@ public class Film {
     @JsonSerialize(as = Long.class)
     @JsonDeserialize(using = DurationDeserializer.class)
     private Duration duration;
+    private Set<Long> like = new HashSet<>();
 
     // геттер для сериализации в минуты
     @JsonIgnore
