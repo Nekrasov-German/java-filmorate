@@ -4,14 +4,11 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService {
+public class UserService implements UserStorage {
     private final UserStorage userStorage;
 
     public UserService(UserStorage userStorage) {
@@ -31,30 +28,43 @@ public class UserService {
     }
 
     public Collection<User> getAllFriends(Long userId) {
-        return userStorage.findById(userId)
-                .getFriends()
+        User user = userStorage.findById(userId);
+        return userStorage.findAll()
                 .stream()
-                .map(userStorage::findById)
-                .filter(Objects::nonNull)
+                .filter(u -> user.getFriends().contains(u.getId()))
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
     public Collection<User> getAllCommonFriends(Long userId, Long friendId) {
-        Set<User> friendsUserId = userStorage.findById(userId)
-                .getFriends()
+        return userStorage.findAll()
                 .stream()
-                .map(userStorage::findById)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+                .filter(u -> userStorage.findById(userId).getFriends().contains(u.getId()))
+                .filter(u -> userStorage.findById(friendId).getFriends().contains(u.getId()))
+                .collect(Collectors.toCollection(HashSet::new));
+    }
 
-        Set<User> friendsFriendsId = userStorage.findById(friendId)
-                .getFriends()
-                .stream()
-                .map(userStorage::findById)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+    @Override
+    public Collection<User> findAll() {
+        return userStorage.findAll();
+    }
 
-        friendsUserId.retainAll(friendsFriendsId);
-        return friendsUserId;
+    @Override
+    public User create(User user) {
+        return userStorage.create(user);
+    }
+
+    @Override
+    public User update(User user) {
+        return userStorage.update(user);
+    }
+
+    @Override
+    public void delete(User user) {
+        userStorage.delete(user);
+    }
+
+    @Override
+    public User findById(Long id) {
+        return userStorage.findById(id);
     }
 }

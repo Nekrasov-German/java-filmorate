@@ -8,8 +8,13 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import java.util.*;
 
 @Service
-public class FilmService {
+public class FilmService implements FilmStorage {
     private final FilmStorage filmStorage;
+    private final Comparator<Film> saveComparator = (f1, f2) -> {
+        int size1 = f1.getLike() != null ? f1.getLike().size() : 0;
+        int size2 = f2.getLike() != null ? f2.getLike().size() : 0;
+        return Integer.compare(size1, size2);
+    };
 
     public FilmService(FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
@@ -26,15 +31,35 @@ public class FilmService {
     }
 
     public Collection<Film> getAllLikes(int count) {
-        Comparator<Film> safeComparator = (f1, f2) -> {
-            int size1 = f1.getLike() != null ? f1.getLike().size() : 0;
-            int size2 = f2.getLike() != null ? f2.getLike().size() : 0;
-            return Integer.compare(size1, size2);
-        };
-        Set<Film> actualFilms = new TreeSet<>(safeComparator.reversed());
+        Set<Film> actualFilms = new TreeSet<>(saveComparator.reversed());
         actualFilms.addAll(filmStorage.findAll());
         return actualFilms.stream()
                 .limit(count)
                 .toList();
+    }
+
+    @Override
+    public Collection<Film> findAll() {
+        return filmStorage.findAll();
+    }
+
+    @Override
+    public Film create(Film film) {
+        return filmStorage.create(film);
+    }
+
+    @Override
+    public Film update(Film film) {
+        return filmStorage.update(film);
+    }
+
+    @Override
+    public void delete(Film film) {
+        filmStorage.delete(film);
+    }
+
+    @Override
+    public Film findById(Long id) {
+        return filmStorage.findById(id);
     }
 }

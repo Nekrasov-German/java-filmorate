@@ -2,36 +2,30 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    private final FilmStorage filmStorage;
     private final FilmService filmService;
-    private final UserStorage userStorage;
-
-    public FilmController(FilmStorage filmStorage, FilmService filmService, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.filmService = filmService;
-        this.userStorage = userStorage;
-    }
+    private final UserService userService;
 
     @GetMapping
     public Collection<Film> findAll() {
-        return filmStorage.findAll();
+        return filmService.findAll();
     }
 
     @GetMapping("/popular")
@@ -44,27 +38,27 @@ public class FilmController {
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        return filmStorage.create(film);
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
-        return filmStorage.update(film);
+        return filmService.update(film);
     }
 
     @PutMapping("/{id}/like/{userId}")
     public Film putLikeFilm(@PathVariable long id, @PathVariable long userId) {
-        return filmService.addLike(userStorage.findById(userId), filmStorage.findById(id));
+        return filmService.addLike(userService.findById(userId), filmService.findById(id));
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public Film deleteLikeFilm(@PathVariable long id, @PathVariable long userId) {
-        return filmService.deleteLike(userStorage.findById(userId), filmStorage.findById(id));
+        return filmService.deleteLike(userService.findById(userId), filmService.findById(id));
     }
 
     @DeleteMapping
     public void delete(Film film) {
-        filmStorage.delete(film);
+        filmService.delete(film);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
