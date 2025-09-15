@@ -11,6 +11,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.yandex.practicum.filmorate.controller.UserController;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 
@@ -20,10 +23,12 @@ class UserControllerTest {
     private UserController userController;
     private ObjectMapper objectMapper;
     private User testUser;
+    private final UserStorage userStorage = new InMemoryUserStorage();
+    private final UserService userService = new UserService(userStorage);
 
     @BeforeEach
     void setUp() {
-        userController = new UserController();
+        userController = new UserController(userService);
         mockMvc = MockMvcBuilders.standaloneSetup(userController)
                 .build();
 

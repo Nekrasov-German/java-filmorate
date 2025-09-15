@@ -1,60 +1,64 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895,12,28);
-    private final Map<Long, Film> films = new HashMap<>();
+    private final FilmService filmService;
+    private final UserService userService;
 
     @GetMapping
     public Collection<Film> findAll() {
-        return films.values();
+        return filmService.findAll();
+    }
+
+    @GetMapping("/popular")
+    public Collection<Film> findPopularFilms(@RequestParam(defaultValue = "10") Integer count) {
+        if (count <= 0) {
+            throw new ValidationException("Количество фильмов должно быть больше ноля");
+        }
+        return filmService.getAllLikes(count);
     }
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
-            throw new ValidationException("дата релиза — не раньше 28 декабря 1895 года");
-        }
-        film.setId(getNextId());
-        films.put(film.getId(),film);
-        return film;
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film) {
-        if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
-            throw new ValidationException("дата релиза — не раньше 28 декабря 1895 года");
-        }
-        if (films.containsKey(film.getId())) {
-            films.put(film.getId(),film);
-        } else {
-            throw new ValidationException("Фильм не найден.");
-        }
-        return film;
+        return filmService.update(film);
     }
 
-    private long getNextId() {
-        long currentMaxId = films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @PutMapping("/{id}/like/{userId}")
+    public Film putLikeFilm(@PathVariable long id, @PathVariable long userId) {
+        return filmService.addLike(userService.findById(userId), filmService.findById(id));
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public Film deleteLikeFilm(@PathVariable long id, @PathVariable long userId) {
+        return filmService.deleteLike(userService.findById(userId), filmService.findById(id));
+    }
+
+    @DeleteMapping
+    public void delete(Film film) {
+        filmService.delete(film);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
