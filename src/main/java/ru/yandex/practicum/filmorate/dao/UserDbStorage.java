@@ -86,16 +86,16 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public Optional<User> findById(Long id) {
-        return findOne(findById,id);
+        return findOne(findById, id);
     }
 
     @Override
-    public void addFriend(Long user_id, Long friend_id) {
-        update(addFriend,user_id,friend_id);
+    public void addFriend(Long userId, Long friendId) {
+        update(addFriend, userId, friendId);
     }
 
     public void deleteFriend(Long userId, Long friendId) {
-        delete(deleteFriend,userId,friendId);
+        delete(deleteFriend, userId, friendId);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         if (findById(id).isEmpty()) {
             throw new NotFoundException("Такого пользователя не существует.");
         }
-        return findMany(getFriendsById,id);
+        return findMany(getFriendsById, id);
     }
 
     @Override
