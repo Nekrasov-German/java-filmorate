@@ -8,7 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MPA;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.GenreService;
+import ru.yandex.practicum.filmorate.service.MPAService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
@@ -18,17 +22,44 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/films")
+@RequestMapping
 public class FilmController {
     private final FilmService filmService;
     private final UserService userService;
+    private final GenreService genreService;
+    private final MPAService mpaService;
 
-    @GetMapping
+    @GetMapping("/mpa")
+    public Collection<MPA> findAllMPA() {
+        return mpaService.findAllMPA();
+    }
+
+    @GetMapping("/mpa/{id}")
+    public MPA getMPAById(@PathVariable long id) {
+        return mpaService.getMPAById(id).get();
+    }
+
+    @GetMapping("/genres")
+    public Collection<Genre> findAllGenre() {
+        return genreService.findAllGenre();
+    }
+
+    @GetMapping("/genres/{id}")
+    public Genre getGenreById(@PathVariable long id) {
+        return genreService.getGenreById(id).get();
+    }
+
+    @GetMapping("/films")
     public Collection<Film> findAll() {
         return filmService.findAll();
     }
 
-    @GetMapping("/popular")
+    @GetMapping("/films/{id}")
+    public Film getFilmById(@PathVariable Long id) {
+        return filmService.findById(id).get();
+    }
+
+    @GetMapping("/films/popular")
     public Collection<Film> findPopularFilms(@RequestParam(defaultValue = "10") Integer count) {
         if (count <= 0) {
             throw new ValidationException("Количество фильмов должно быть больше ноля");
@@ -36,27 +67,27 @@ public class FilmController {
         return filmService.getAllLikes(count);
     }
 
-    @PostMapping
+    @PostMapping("/films")
     public Film create(@Valid @RequestBody Film film) {
         return filmService.create(film);
     }
 
-    @PutMapping
+    @PutMapping("/films")
     public Film update(@Valid @RequestBody Film film) {
         return filmService.update(film);
     }
 
-    @PutMapping("/{id}/like/{userId}")
+    @PutMapping("/films/{id}/like/{userId}")
     public Film putLikeFilm(@PathVariable long id, @PathVariable long userId) {
-        return filmService.addLike(userService.findById(userId), filmService.findById(id));
+        return filmService.addLike(userService.findById(userId).get(), filmService.findById(id).get());
     }
 
-    @DeleteMapping("/{id}/like/{userId}")
+    @DeleteMapping("/films/{id}/like/{userId}")
     public Film deleteLikeFilm(@PathVariable long id, @PathVariable long userId) {
-        return filmService.deleteLike(userService.findById(userId), filmService.findById(id));
+        return filmService.deleteLike(userService.findById(userId).get(), filmService.findById(id).get());
     }
 
-    @DeleteMapping
+    @DeleteMapping("/films")
     public void delete(Film film) {
         filmService.delete(film);
     }

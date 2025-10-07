@@ -1,70 +1,95 @@
 package ru.yandex.practicum.filmorate.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.dao.UserStorage;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService implements UserStorage {
+public class UserService {//implements UserStorage {
+    @Autowired
+    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
 
     public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
-    public User addFriend(Long userId, Long friendId) {
-        userStorage.findById(userId).getFriends().add(friendId);
-        userStorage.findById(friendId).getFriends().add(userId);
-        return userStorage.findById(userId);
-    }
-
-    public User deleteFriend(Long userId, Long friendId) {
-        userStorage.findById(userId).getFriends().remove(friendId);
-        userStorage.findById(friendId).getFriends().remove(userId);
-        return userStorage.findById(userId);
-    }
-
     public Collection<User> getAllFriends(Long userId) {
-        User user = userStorage.findById(userId);
-        return userStorage.findAll()
-                .stream()
-                .filter(u -> user.getFriends().contains(u.getId()))
-                .collect(Collectors.toCollection(HashSet::new));
+        return userStorage.getFriends(userId);
     }
 
     public Collection<User> getAllCommonFriends(Long userId, Long friendId) {
-        return userStorage.findAll()
-                .stream()
-                .filter(u -> userStorage.findById(userId).getFriends().contains(u.getId()))
-                .filter(u -> userStorage.findById(friendId).getFriends().contains(u.getId()))
-                .collect(Collectors.toCollection(HashSet::new));
+        Collection<User> userIdFriends = getAllFriends(userId);
+        Collection<User> friendIdFriends = getAllFriends(friendId);
+
+        return userIdFriends.stream()
+                .filter(friendIdFriends::contains)
+                .collect(Collectors.toList());
     }
 
-    @Override
     public Collection<User> findAll() {
         return userStorage.findAll();
     }
 
-    @Override
     public User create(User user) {
         return userStorage.create(user);
     }
 
-    @Override
     public User update(User user) {
         return userStorage.update(user);
     }
 
-    @Override
     public void delete(User user) {
         userStorage.delete(user);
     }
 
-    @Override
-    public User findById(Long id) {
+    public Optional<User> findById(Long id) {
         return userStorage.findById(id);
+    }
+
+    public User addFriend(Long userId, Long friendId) {
+        validateUsersExist(userId, friendId);
+
+        userStorage.addFriend(userId, friendId);
+
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+
+        user.getFriends().add(friendId);
+        return user;
+    }
+
+    public User deleteFriend(Long userId, Long friendId) {
+        validateUsersExist(userId, friendId);
+
+        userStorage.deleteFriend(userId, friendId);
+
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+
+        user.getFriends().remove(friendId);
+        return user;
+    }
+
+    public Collection<Long> getFriendIds(Long userId) {
+        return userStorage.getFriendIds(userId);
+    }
+
+    public Collection<User> getFriends(Long userId) {
+        return userStorage.getFriends(userId);
+    }
+
+    private void validateUsersExist(Long userId, Long friendId) {
+        if (!userStorage.findById(userId).isPresent() ||
+                !userStorage.findById(friendId).isPresent()) {
+            throw new NotFoundException("Пользователь не найден");
+        }
     }
 }
