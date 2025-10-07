@@ -29,18 +29,18 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Autowired
     private UserDbStorage userDbStorage;
 
-    private final String FIND_ALL = "SELECT * FROM films;";
-    private final String FIND_BY_ID = "SELECT * FROM films WHERE id = ?;";
-    private final String CREATE_FILM = "INSERT INTO films (name, description, release_date, duration, mpa_id) " +
+    private final String requestFindAllFilms = "SELECT * FROM films;";
+    private final String findByIdFilms = "SELECT * FROM films WHERE id = ?;";
+    private final String requestCreateFilm = "INSERT INTO films (name, description, release_date, duration, mpa_id) " +
             "VALUES (?,?,?,?,?);";
-    private final String UPDATE_FILM = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? " +
+    private final String updatefilm = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? " +
             "WHERE id = ?";
-    private final String DELETE_FILM = "DELETE films WHERE id = ?";
-    private final String INSERT_GENRE = "INSERT INTO film_genres (film_id, genre_id) VALUES (?,?);";
-    private final String DELETE_GENRES = "DELETE FROM film_genres WHERE film_id = ?;";
-    private final String INSERT_LIKE = "INSERT INTO film_likes (film_id, user_id) VALUES (?,?);";
-    private final String DELETE_LIKE = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?;";
-    private final String FIND_FILMS_BY_RATING = "SELECT \n" +
+    private final String deletefilm = "DELETE films WHERE id = ?";
+    private final String insertgenre = "INSERT INTO film_genres (film_id, genre_id) VALUES (?,?);";
+    private final String deletegenres = "DELETE FROM film_genres WHERE film_id = ?;";
+    private final String insertLike = "INSERT INTO film_likes (film_id, user_id) VALUES (?,?);";
+    private final String deleteLike = "DELETE FROM film_likes WHERE film_id = ? AND user_id = ?;";
+    private final String findFilmsByRating = "SELECT \n" +
             "    f.id,\n" +
             "    f.name,\n" +
             "    f.description,\n" +
@@ -59,15 +59,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     public Collection<Film> findFilmsByLike(int count) {
-        return findMany(FIND_FILMS_BY_RATING,count);
+        return findMany(findFilmsByRating,count);
     }
 
     public void addLike(Long filmId, Long userId) {
-        update(INSERT_LIKE, filmId, userId);
+        update(insertLike, filmId, userId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
-        delete(DELETE_LIKE, filmId, userId);
+        delete(deleteLike, filmId, userId);
     }
 
     public Set<Genre> getGenreById(Long id) {
@@ -76,17 +76,17 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public void addGenres(Long filmId, Set<Genre> genreId) {
-        genreId.forEach(g -> update(INSERT_GENRE,filmId,g.getId()));
+        genreId.forEach(g -> update(insertgenre,filmId,g.getId()));
     }
 
     @Override
     public void removeGenres(Long filmId) {
-        delete(DELETE_GENRES,filmId);
+        delete(deletegenres,filmId);
     }
 
     @Override
     public Collection<Film> findAll() {
-        return findMany(FIND_ALL);
+        return findMany(requestFindAllFilms);
     }
 
     @Override
@@ -104,7 +104,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             }
         }
         long id = insert(
-                CREATE_FILM,
+                requestCreateFilm,
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
@@ -118,7 +118,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Film update(Film film) {
-        if (findOne(FIND_BY_ID, film.getId()).isPresent()) {
+        if (findOne(findByIdFilms, film.getId()).isPresent()) {
             Long idMPA = film.getMpa().getId();
             Optional<MPA> mpa = mpaDbStorage.findById(idMPA);
             if (mpa.isEmpty()) {
@@ -132,7 +132,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 }
             }
             update(
-                    UPDATE_FILM,
+                    updatefilm,
                     film.getName(),
                     film.getDescription(),
                     film.getReleaseDate(),
@@ -150,12 +150,12 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public void delete(Film film) {
         removeGenres(film.getId());
-        delete(DELETE_FILM, film.getId());
+        delete(deletefilm, film.getId());
     }
 
     @Override
     public Optional<Film> findById(Long id) {
-        Optional<Film> film = findOne(FIND_BY_ID,id);
+        Optional<Film> film = findOne(findByIdFilms,id);
         film.get().setGenres(getGenreById(id));
         Set<Long> userIds = userDbStorage.findUsersByLike(id).stream()
                 .map(User::getId)
