@@ -12,7 +12,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService {//implements UserStorage {
+public class UserService {
+
     @Autowired
     @Qualifier("userDbStorage")
     private final UserStorage userStorage;
