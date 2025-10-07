@@ -16,19 +16,19 @@ import java.util.Optional;
 @Component
 @Qualifier("userDbStorage")
 public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
-    private final String FIND_ALL = "SELECT * FROM users;";
-    private final String FIND_BY_ID = "SELECT * FROM users WHERE id = ?;";
-    private final String CREATE_USER = "INSERT INTO users (email, login, name, birthday) " +
+    private final String findAll = "SELECT * FROM users;";
+    private final String findById = "SELECT * FROM users WHERE id = ?;";
+    private final String createUser = "INSERT INTO users (email, login, name, birthday) " +
             "VALUES (?,?,?,?);";
-    private final String UPDATE_USER = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
-    private final String DELETE_USER = "DELETE users WHERE id = ?";
-    private final String ADD_FRIEND = "INSERT INTO user_friends (user_id, friend_id) VALUES (?,?);";
-    private final String DELETE_FRIEND = "DELETE user_friends WHERE user_id = ? AND friend_id = ?;";
-    private final String GET_FRIENDS_BY_ID = "SELECT u.* FROM users u " +
+    private final String updateUser = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
+    private final String deleteUser = "DELETE users WHERE id = ?";
+    private final String addFriend = "INSERT INTO user_friends (user_id, friend_id) VALUES (?,?);";
+    private final String deleteFriend = "DELETE user_friends WHERE user_id = ? AND friend_id = ?;";
+    private final String getFriendsById = "SELECT u.* FROM users u " +
             "JOIN user_friends uf ON uf.friend_id = u.id " +
             "WHERE uf.user_id = ?;";
-    private final String GET_FRIEND_IDS = "SELECT friend_id FROM user_friends WHERE user_id = ?;";
-    private final String GET_USERS_LIKE_FILM = "SELECT u.* FROM users u JOIN film_likes fl ON u.id = fl.user_id " +
+    private final String getFriendIds = "SELECT friend_id FROM user_friends WHERE user_id = ?;";
+    private final String getUsersLikeFilm = "SELECT u.* FROM users u JOIN film_likes fl ON u.id = fl.user_id " +
             "WHERE fl.film_id = ?;";
 
     private final UserMapper userMapper;
@@ -41,18 +41,18 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     public Collection<User> findUsersByLike(Long id) {
-        return findMany(GET_USERS_LIKE_FILM, id);
+        return findMany(getUsersLikeFilm, id);
     }
 
     @Override
     public Collection<User> findAll() {
-        return findMany(FIND_ALL);
+        return findMany(findAll);
     }
 
     @Override
     public User create(User user) {
         long id = insert(
-                CREATE_USER,
+                createUser,
                 user.getEmail(),
                 user.getLogin(),
                 user.getName(),
@@ -64,9 +64,9 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public User update(User user) {
-        if (findOne(FIND_BY_ID, user.getId()).isPresent()) {
+        if (findOne(findById, user.getId()).isPresent()) {
             update(
-                    UPDATE_USER,
+                    updateUser,
                     user.getEmail(),
                     user.getLogin(),
                     user.getName(),
@@ -81,21 +81,21 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public void delete(User user) {
-        delete(DELETE_USER, user.getId());
+        delete(deleteUser, user.getId());
     }
 
     @Override
     public Optional<User> findById(Long id) {
-        return findOne(FIND_BY_ID,id);
+        return findOne(findById,id);
     }
 
     @Override
     public void addFriend(Long user_id, Long friend_id) {
-        update(ADD_FRIEND,user_id,friend_id);
+        update(addFriend,user_id,friend_id);
     }
 
     public void deleteFriend(Long userId, Long friendId) {
-        delete(DELETE_FRIEND,userId,friendId);
+        delete(deleteFriend,userId,friendId);
     }
 
     @Override
@@ -103,11 +103,11 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         if (findById(id).isEmpty()) {
             throw new NotFoundException("Такого пользователя не существует.");
         }
-        return findMany(GET_FRIENDS_BY_ID,id);
+        return findMany(getFriendsById,id);
     }
 
     @Override
     public Collection<Long> getFriendIds(Long userId) {
-        return jdbc.query(GET_FRIEND_IDS, friendIdMapper, userId);
+        return jdbc.query(getFriendIds, friendIdMapper, userId);
     }
 }

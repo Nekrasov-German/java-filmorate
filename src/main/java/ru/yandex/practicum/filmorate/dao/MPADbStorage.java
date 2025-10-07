@@ -12,18 +12,18 @@ import java.util.Optional;
 @Slf4j
 @Component
 public class MPADbStorage extends BaseDbStorage<MPA> {
-    private final String FIND_ALL = "SELECT * FROM mpa;";
-    private final String FIND_BY_ID = "SELECT * FROM mpa WHERE id = ?;";
+    private final String findAll = "SELECT * FROM mpa;";
+    private final String findById = "SELECT * FROM mpa WHERE id = ?;";
 
     public MPADbStorage(JdbcTemplate jdbc, RowMapper<MPA> mapper) {
         super(jdbc, mapper);
     }
 
     public List<MPA> findAllMPA() {
-        return findMany(FIND_ALL);
+        return findMany(findAll);
     }
 
     public Optional<MPA> findById(Long id) {
-        return findOne(FIND_BY_ID,id);
+        return findOne(findById,id);
     }
 }

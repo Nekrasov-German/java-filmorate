@@ -12,9 +12,9 @@ import java.util.Optional;
 @Slf4j
 @Component
 public class GenreDbStorage extends BaseDbStorage<Genre> {
-    private final String FIND_ALL = "SELECT * FROM genre ORDER BY id;";
-    private final String FIND_BY_ID = "SELECT * FROM genre WHERE id = ?;";
-    private final String FIND_BY_FILM_ID = "SELECT g.* FROM genre g JOIN film_genres fg ON g.id = fg.genre_id " +
+    private final String findAll = "SELECT * FROM genre ORDER BY id;";
+    private final String findById = "SELECT * FROM genre WHERE id = ?;";
+    private final String findByFilmId = "SELECT g.* FROM genre g JOIN film_genres fg ON g.id = fg.genre_id " +
             "WHERE fg.film_id = ?;";
 
     public GenreDbStorage(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
@@ -22,14 +22,14 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
     }
 
     public List<Genre> findAllGenre() {
-        return findMany(FIND_ALL);
+        return findMany(findAll);
     }
 
     public Optional<Genre> findById(Long id) {
-        return findOne(FIND_BY_ID,id);
+        return findOne(findById,id);
     }
 
     public List<Genre> findGenreByFilmId(Long filmId) {
-        return findMany(FIND_BY_FILM_ID, filmId);
+        return findMany(findByFilmId, filmId);
     }
 }
