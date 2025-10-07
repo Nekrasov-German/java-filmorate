@@ -27,7 +27,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @ComponentScan(basePackages = "ru.yandex.practicum.filmorate") // Добавляем сканирование компонентов
 @Import({UserDbStorage.class, FilmDbStorage.class, UserMapper.class, FilmMapper.class}) // Импортируем маппер
-class FilmoRateApplicationTests {
+class FilmorateApplicationTests {
 	private final UserDbStorage userStorage;
 	private final FilmDbStorage filmDbStorage;
 	private final UserMapper userMapper;
