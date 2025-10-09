@@ -1,11 +1,8 @@
 package ru.yandex.practicum.filmorate.dao.mappers;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.dao.GenreDbStorage;
-import ru.yandex.practicum.filmorate.dao.MPADbStorage;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.MPA;
 
@@ -16,12 +13,6 @@ import java.time.Duration;
 @Slf4j
 @Component
 public class FilmMapper implements RowMapper<Film> {
-    @Autowired
-    private MPADbStorage mpaDbStorage;
-
-    @Autowired
-    private GenreDbStorage genreDbStorage;
-
     @Override
     public Film mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         Film film = new Film();
@@ -32,7 +23,8 @@ public class FilmMapper implements RowMapper<Film> {
         film.setDuration(Duration.ofMinutes(resultSet.getLong("duration")));
 
         long mpaId = resultSet.getLong("mpa_id");
-        MPA mpa = mpaDbStorage.findById(mpaId).orElse(null);
+        MPA mpa = new MPA();
+        mpa.setId(mpaId);
         film.setMpa(mpa);
 
         return film;

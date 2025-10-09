@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -12,22 +11,16 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MPA;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @Qualifier("filmDbStorage")
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
-    @Autowired
-    private MPADbStorage mpaDbStorage;
-    @Autowired
-    private GenreDbStorage genreDbStorage;
-    @Autowired
-    private UserDbStorage userDbStorage;
+    private final MPADbStorage mpaDbStorage;
+    private final GenreDbStorage genreDbStorage;
+    private final UserDbStorage userDbStorage;
 
     private final String requestFindAllFilms = "SELECT * FROM films;";
     private final String findByIdFilms = "SELECT * FROM films WHERE id = ?;";
@@ -54,8 +47,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "ORDER BY likes_count DESC\n" +
             "LIMIT ?;";
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper,
+                         MPADbStorage mpaDbStorage,
+                         GenreDbStorage genreDbStorage,
+                         UserDbStorage userDbStorage) {
         super(jdbc, mapper);
+        this.mpaDbStorage = mpaDbStorage;
+        this.genreDbStorage = genreDbStorage;
+        this.userDbStorage = userDbStorage;
     }
 
     public Collection<Film> findFilmsByLike(int count) {
@@ -75,8 +74,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public void addGenres(Long filmId, Set<Genre> genreId) {
-        genreId.forEach(g -> update(insertgenre,filmId,g.getId()));
+    public void addGenres(Long filmId, Set<Genre> genres) {
+        if (genres.isEmpty()) {
+            return;
+        }
+
+        List<Object[]> batchParams = genres.stream()
+                .map(genre -> new Object[]{filmId, genre.getId()})
+                .collect(Collectors.toList());
+
+        batchUpdate(insertgenre, batchParams);
     }
 
     @Override
@@ -96,10 +103,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         if (mpa.isEmpty()) {
             throw new NotFoundException("Такого рейтинга не найдено");
         }
-        Set<Genre> genres = film.getGenres();
-        for (Genre genre : genres) {
-            Optional<Genre> result = genreDbStorage.findById(genre.getId());
-            if (result.isEmpty()) {
+        Set<Genre> genresFilm = film.getGenres();
+        Set<Genre> genresSet = new HashSet<>(genreDbStorage.findAllGenre());
+        for (Genre genre : genresFilm) {
+            if (!genresSet.contains(genre)) {
                 throw new NotFoundException("Такого жанра не существует.");
             }
         }
@@ -113,6 +120,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         );
         film.setId(id);
         addGenres(film.getId(), film.getGenres());
+        if (film.getMpa().getId().equals(mpa.get().getId())) {
+            film.setMpa(mpa.get());
+        }
         return film;
     }
 
@@ -124,10 +134,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             if (mpa.isEmpty()) {
                 throw new NotFoundException("Такого рейтинга не найдено");
             }
-            Set<Genre> genres = film.getGenres();
-            for (Genre genre : genres) {
-                Optional<Genre> result = genreDbStorage.findById(genre.getId());
-                if (result.isEmpty()) {
+            Set<Genre> genresFilm = film.getGenres();
+            Set<Genre> genresSet = new HashSet<>(genreDbStorage.findAllGenre());
+            for (Genre genre : genresFilm) {
+                if (!genresSet.contains(genre)) {
                     throw new NotFoundException("Такого жанра не существует.");
                 }
             }
@@ -141,6 +151,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     film.getId()
             );
             addGenres(film.getId(), film.getGenres());
+            if (film.getMpa().getId().equals(mpa.get().getId())) {
+                film.setMpa(mpa.get());
+            }
             return film;
         } else {
             throw new NotFoundException("Фильм не найден");
@@ -161,6 +174,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 .map(User::getId)
                 .collect(Collectors.toSet());
         film.get().setLikes(userIds);
+        Long mpaId = film.get().getMpa().getId();
+        film.get().setMpa(mpaDbStorage.findById(mpaId).get());
         return film;
     }
 }

@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -70,6 +71,27 @@ public class BaseDbStorage<T> {
         } catch (Exception e) {
             log.error("Ошибка при удалении данных: ", e);
             return 0;
+        }
+    }
+
+    protected int[] batchUpdate(String query, List<Object[]> batchParams) {
+        try {
+            int[] updateCounts = jdbc.batchUpdate(query, batchParams);
+
+            if (updateCounts == null || updateCounts.length == 0) {
+                throw new BadRequestException("Не удалось выполнить пакетное обновление данных");
+            }
+
+            for (int count : updateCounts) {
+                if (count == 0) {
+                    throw new BadRequestException("Не удалось обновить данные в одной из операций");
+                }
+            }
+
+            return updateCounts;
+        } catch (DataAccessException e) {
+            log.error("Ошибка при пакетном обновлении данных: {}", e.getMessage());
+            throw new BadRequestException("Ошибка при выполнении пакетного обновления");
         }
     }
 }
