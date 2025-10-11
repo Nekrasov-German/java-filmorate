@@ -34,9 +34,10 @@ public class Film {
     @JsonSerialize(as = Long.class)
     @JsonDeserialize(using = DurationDeserializer.class)
     private Duration duration;
-    private Set<Long> like = new HashSet<>();
+    private Set<Long> likes = new HashSet<>();
+    private MPA mpa;
+    private Set<Genre> genres = new HashSet<>();
 
-    // геттер для сериализации в минуты
     @JsonIgnore
     public Duration getDuration() {
         return duration;
